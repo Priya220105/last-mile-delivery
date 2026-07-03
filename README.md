@@ -25,7 +25,7 @@ npm install
 
 Create `.env` file:
 ```
-MONGODB_URL=mongodb+srv://your-username:your-password@cluster0.mongodb.net/delivery-tracker?retryWrites=true&w=majority
+MONGODB_URL=your_mongodb_connection_string
 JWT_SECRET=your-secret-key-change-in-production-12345
 PORT=5000
 NODE_ENV=development
