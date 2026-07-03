@@ -1,384 +1,270 @@
-# Last-Mile Delivery Tracker
+# 📦 Last-Mile Delivery Tracker
 
-A complete delivery management platform with customers, delivery agents, and admin dashboard. Built with Node.js, Express, MongoDB, and React.
+A full-stack delivery management platform where customers and admins create
+orders with auto-calculated shipping charges, delivery agents are assigned
+to fulfil them, and customers get real-time status tracking with email
+notifications at every step.
 
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 16+
-- MongoDB Atlas account (free tier)
-- Git
-
-### Installation
-
-#### 1. Clone or Create Project
-```bash
-cd last-mile-delivery
-```
-
-#### 2. Setup Backend
-
-```bash
-cd backend
-npm install
-```
-
-Create `.env` file:
-```
-MONGODB_URL=your_mongodb_connection_string
-JWT_SECRET=your-secret-key-change-in-production-12345
-PORT=5000
-NODE_ENV=development
-```
-
-**To create MongoDB Atlas cluster:**
-1. Go to https://www.mongodb.com/cloud/atlas
-2. Create free account
-3. Create a cluster (M0 Free tier)
-4. Create database user with username/password
-5. Get connection string and replace in .env
-
-#### 3. Setup Frontend
-
-```bash
-cd ../frontend
-npm install
-```
-
-#### 4. Run Locally
-
-**Terminal 1 - Backend:**
-```bash
-cd backend
-npm start
-# Server runs on http://localhost:5000
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-npm run dev
-# Frontend runs on http://localhost:3000
-```
-
-Visit http://localhost:3000
+Built as part of the Unthinkable Solutions (Daffodil Software) assignment —
+2027 batch.
 
 ---
 
-## 📊 Database Schema
+## 🔗 Live Demo
 
-### Collections
+| | |
+|---|---|
+| **Frontend** | [last-mile-delivery-delta.vercel.app](https://last-mile-delivery-delta.vercel.app) |
+| **Backend API** | [last-mile-delivery-api.onrender.com](https://last-mile-delivery-api.onrender.com) |
 
-#### Users Collection
-```javascript
+> **Note:** The backend runs on Render's free tier, which spins down after
+> inactivity. The **first request may take 30–60 seconds** to respond while
+> the server wakes up — please allow it to load fully before assuming an
+> error. Screenshots below cover the core flows in case of a slow cold start
+> during review.
+
+### Screenshots
+`<insert 2–3 screenshots: order placement + charge breakdown, admin dashboard, zones management>`
+
+---
+
+## ✨ Features
+
+- **Role-based access** — customer, delivery agent, and admin, each with a
+  dedicated dashboard
+- **Auto-calculated charges** — zone detection, volumetric weight, B2B/B2C
+  rate cards, and COD surcharge, all computed before order confirmation
+- **Admin-configurable pricing and zones** — no hardcoded rates or zone
+  boundaries; both are fully manageable through the Admin Dashboard
+- **Agent auto-assignment** — nearest available agent selected automatically,
+  with manual override always available to admins
+- **Immutable order tracking history** — every status change is logged with
+  a timestamp and the actor who made it
+- **Failed delivery recovery** — customer is notified, can reschedule, and
+  the order is automatically reassigned for the new attempt
+- **Email notifications** on every order status change
+
+---
+
+## 🛠 Tech Stack
+
+- **Frontend:** React (Vite)
+- **Backend:** Node.js, Express
+- **Database:** MongoDB (Atlas)
+- **Auth:** Role-based authentication (JWT)
+- **Notifications:** Email on order status change
+- **Deployment:** Vercel (frontend) · Render (backend)
+
+---
+
+## 🚀 Setup Guide
+
+### Prerequisites
+- Node.js v18+
+- A MongoDB Atlas cluster (or local MongoDB instance)
+
+### Backend
+
+```bash
+cd backend
+npm install
+cp .env.example .env
+# fill in MONGODB_URI and any other required values in .env
+node init-db.js        # seeds demo users, zones, and rate cards
+npm start               # starts the API server on http://localhost:5000
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev              # starts the app on http://localhost:3000
+```
+
+---
+
+## 🔑 Demo Credentials
+
+| Role     | Email                  | Password    |
+|----------|-------------------------|-------------|
+| Customer | customer@example.com   | password123 |
+| Admin    | admin@example.com      | password123 |
+| Agent    | agent@example.com      | password123 |
+
+---
+
+## 🌍 Environment Variables
+
+See `.env.example` for the full list. At minimum:
+
+```
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/lastmile_delivery?retryWrites=true&w=majority
+PORT=5000
+```
+
+---
+
+## 🗄 Database Schema
+
+### `users`
+```js
 {
   _id: ObjectId,
-  email: String,
-  password: String (bcrypt hashed),
+  email: String (unique),
+  password: String (bcrypt hash),
   name: String,
-  role: "customer" | "admin" | "agent",
+  role: 'customer' | 'admin' | 'agent',
   createdAt: Date
 }
 ```
 
-#### Orders Collection
-```javascript
+### `zones`
+```js
+{
+  _id: ObjectId,
+  name: String,
+  pincodes: [String],        // areas served by this zone
+  coordinates: {              // bounding box used for zone detection
+    minLat: Number,
+    maxLat: Number,
+    minLng: Number,
+    maxLng: Number
+  },
+  createdAt: Date
+}
+```
+Zones are fully admin-configurable via the Admin Dashboard — new zones (with
+their own pincodes and coordinate bounds) can be created without any code
+change or redeployment.
+
+### `rateCards`
+```js
+{
+  _id: ObjectId,
+  type: 'B2C' | 'B2B',
+  rates: {
+    intraZone: { '0-500g': Number, '500g-1kg': Number, '1-2kg': Number, '2-5kg': Number, '5kg+': Number },
+    interZone: { '0-500g': Number, '500g-1kg': Number, '1-2kg': Number, '2-5kg': Number, '5kg+': Number }
+  },
+  codSurcharge: Number,   // percentage
+  createdAt: Date
+}
+```
+Rate cards are also fully admin-configurable through the dashboard.
+
+### `orders`
+```js
 {
   _id: ObjectId,
   customerId: ObjectId,
-  agentId: ObjectId (null if not assigned),
+  agentId: ObjectId | null,
   pickupAddress: String,
+  pickupCoordinates: { lat: Number, lng: Number },
   dropAddress: String,
-  length: Number (cm),
-  breadth: Number (cm),
-  height: Number (cm),
-  actualWeight: Number (kg),
-  orderType: "B2C" | "B2B",
-  paymentType: "Prepaid" | "COD",
-  chargeBreakdown: {
+  dropCoordinates: { lat: Number, lng: Number },
+  length: Number, breadth: Number, height: Number,   // cm
+  actualWeight: Number,                               // kg
+  orderType: 'B2C' | 'B2B',
+  paymentType: 'Prepaid' | 'COD',
+  charge: {
+    volumetricWeight: Number,
+    billableWeight: Number,
+    weightSlab: String,
     baseCharge: Number,
     codSurcharge: Number,
     total: Number
   },
-  status: "Created" | "Picked Up" | "In Transit" | "Out for Delivery" | "Delivered" | "Failed",
-  tracking: [
-    {
-      status: String,
-      timestamp: Date,
-      actor: String (email)
-    }
+  status: 'Created' | 'Picked Up' | 'In Transit' | 'Out for Delivery' | 'Delivered' | 'Failed',
+  statusHistory: [
+    { status: String, timestamp: Date, actor: String }
   ],
-  createdAt: Date,
-  updatedAt: Date
-}
-```
-
-#### Zones Collection
-```javascript
-{
-  _id: ObjectId,
-  name: String,
-  pincodes: [String],
   createdAt: Date
 }
 ```
 
-#### Rate Cards Collection
-```javascript
-{
-  _id: ObjectId,
-  type: "B2B" | "B2C",
-  rates: {
-    intraZone: {
-      "0-500g": Number,
-      "500g-1kg": Number,
-      "1-2kg": Number,
-      "2-5kg": Number,
-      "5kg+": Number
-    },
-    interZone: { ... }
-  },
-  codSurcharge: Number (percentage),
-  createdAt: Date
-}
-```
+---
+
+## 📡 API Reference (high level)
+
+> Confirm exact paths against `routes/auth.js`, `routes/orders.js`,
+> `routes/admin.js` before final submission.
+
+**Auth**
+- `POST /api/auth/register` — customer registration
+- `POST /api/auth/login` — returns auth token + role
+
+**Orders**
+- `POST /api/orders/calculate-charge` — returns charge breakdown before confirmation
+- `POST /api/orders` — creates an order
+- `GET /api/orders` — customer's own orders / admin: all orders
+- `PATCH /api/orders/:id/status` — update order status (agent/admin)
+
+**Admin**
+- `GET/POST /api/admin/zones` — list / create zones
+- `GET/POST /api/admin/rateCards` — list / create rate cards
+- `GET /api/admin/agents` — list delivery agents
+- `GET /api/admin/stats` — dashboard summary stats
 
 ---
 
 ## 💰 Rate Calculation Logic
 
-### Step-by-Step Process
+1. **Zone detection** — pickup and drop coordinates are matched against each
+   zone's bounding box. Zones are designed to tile the covered region with
+   no gaps, so any valid coordinate resolves to exactly one zone.
+2. **Volumetric weight** — `(length × breadth × height) / 5000`
+3. **Billable weight** — the higher of actual weight vs volumetric weight
+4. **Weight slab lookup** — billable weight maps to a slab
+   (`0-500g`, `500g-1kg`, `1-2kg`, `2-5kg`, `5kg+`)
+5. **Rate card lookup** — correct rate card (B2B/B2C) is fetched; whether
+   pickup and drop share a zone determines intra-zone vs inter-zone pricing
+6. **COD surcharge** — added as a percentage of base charge if payment type
+   is COD
+7. The full breakdown is returned to the customer for review **before**
+   order confirmation.
 
-1. **Volumetric Weight Calculation**
-   ```
-   Volumetric Weight = (Length × Breadth × Height) / 5000
-   ```
+All rates, surcharges, and zone boundaries are stored in MongoDB and managed
+through the Admin Dashboard — nothing is hardcoded in application logic.
 
-2. **Billable Weight**
-   ```
-   Billable Weight = MAX(Actual Weight, Volumetric Weight)
-   ```
-
-3. **Weight Slab Mapping**
-   - 0-500g: 0-0.5 kg
-   - 500g-1kg: 0.5-1 kg
-   - 1-2kg: 1-2 kg
-   - 2-5kg: 2-5 kg
-   - 5kg+: > 5 kg
-
-4. **Zone Detection**
-   - Get pickup address pincode → find matching zone
-   - Get drop address pincode → find matching zone
-   - If same zone → use **intra-zone rate**
-   - If different zones → use **inter-zone rate**
-
-5. **Base Charge Lookup**
-   ```
-   Get rate card for order type (B2B or B2C)
-   Look up rate card for: weight slab + zone type (intra/inter)
-   Base Charge = Found rate
-   ```
-
-6. **COD Surcharge** (if payment type is COD)
-   ```
-   COD Surcharge = (Base Charge × COD Surcharge %) / 100
-   ```
-
-7. **Total Charge**
-   ```
-   Total = Base Charge + COD Surcharge
-   ```
-
-### Example Calculation
-```
-Pickup Pincode: 110001 (Zone: Delhi North)
-Drop Pincode: 110002 (Zone: Delhi North) → INTRA-ZONE
-
-Package: 20×15×10 cm, Actual Weight: 0.8 kg, Type: B2C
-
-Volumetric Weight = (20 × 15 × 10) / 5000 = 0.6 kg
-Billable Weight = MAX(0.8, 0.6) = 0.8 kg → Slab: 500g-1kg
-
-Rate Card (B2C, Intra-Zone, 500g-1kg): ₹75
-
-Charge Breakdown:
-- Base Charge: ₹75
-- COD Surcharge (if COD): ₹7.5 (10% of 75)
-- Total: ₹82.5
-```
+📄 Full design rationale (zone detection, auto-assignment, failed delivery
+handling) is in [`SYSTEM_DESIGN.md`](./SYSTEM_DESIGN.md).
 
 ---
 
-## 🔑 API Endpoints
+## 🧪 Example Data for Testing
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/profile` - Get current user (requires token)
+This demo is scoped to a limited set of zones — **NCR (Delhi North/South/West,
+Gurgaon, Noida) plus Kanpur**. Coordinates outside these zones will correctly
+return "zone not found," since zone coverage is intentionally limited for
+this MVP (new zones can be added anytime via the Admin Dashboard without
+code changes).
 
-### Orders
-- `POST /api/orders/calculate-charge` - Calculate charge before creating order
-- `POST /api/orders` - Create new order
-- `GET /api/orders` - Get user's orders
-- `GET /api/orders/:id` - Get single order details
-- `PUT /api/orders/:id/status` - Update order status
-- `PUT /api/orders/:id/assign-agent` - Assign agent to order (admin only)
+| Zone         | Latitude | Longitude |
+|--------------|----------|-----------|
+| Delhi North  | 28.70    | 77.10     |
+| Delhi South  | 28.55    | 77.15     |
+| Delhi West   | 28.70    | 76.95     |
+| Gurgaon      | 28.45    | 77.00     |
+| Noida        | 28.55    | 77.35     |
+| Kanpur       | 26.45    | 80.33     |
 
-### Admin
-- `POST /api/admin/zones` - Create zone
-- `GET /api/admin/zones` - Get all zones
-- `PUT /api/admin/zones/:id` - Update zone
-- `POST /api/admin/rate-cards` - Create/update rate card
-- `GET /api/admin/rate-cards` - Get all rate cards
-- `GET /api/admin/orders` - Get all orders (admin view)
-- `GET /api/admin/dashboard/stats` - Get dashboard statistics
-- `GET /api/admin/agents` - Get all agents
+Sample package for testing: Length `20cm`, Breadth `15cm`, Height `10cm`,
+Actual Weight `2kg` → resolves to weight slab `1-2kg`.
 
 ---
 
-## 👥 Default Demo Accounts
+## ⚖️ Known Limitations / Future Work
 
-Use these to test the application:
-
-### Customer
-- Email: `customer@example.com`
-- Password: `password123`
-
-### Admin
-- Email: `admin@example.com`
-- Password: `password123`
-
-### Agent
-- Email: `agent@example.com`
-- Password: `password123`
+- Zone coverage limited to NCR + Kanpur for this MVP; extending to any
+  Indian city just requires adding a zone via the Admin Dashboard
+- Agent-to-order distance uses straight-line (haversine) calculation rather
+  than real road-network routing
+- Notifications are email-only; SMS integration is a natural next step
+- Free-tier hosting (Render) has a cold-start delay after inactivity
 
 ---
 
-## 📦 Project Structure
+## 👤 Author
 
-```
-last-mile-delivery/
-├── backend/
-│   ├── server.js
-│   ├── package.json
-│   ├── .env.example
-│   ├── middleware/
-│   │   └── auth.js
-│   ├── routes/
-│   │   ├── auth.js
-│   │   ├── orders.js
-│   │   └── admin.js
-│   └── helpers/
-│       └── rateCalculator.js
-├── frontend/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── src/
-│       ├── main.jsx
-│       ├── App.jsx
-│       ├── App.css
-│       └── pages/
-│           ├── Login.jsx
-│           ├── Register.jsx
-│           ├── CustomerDashboard.jsx
-│           ├── AdminDashboard.jsx
-│           └── AgentDashboard.jsx
-└── README.md
-```
-
----
-
-## 🚀 Deployment
-
-### Deploy Backend to Render
-
-1. Push code to GitHub
-2. Go to https://render.com
-3. Create new "Web Service"
-4. Connect GitHub repository
-5. Set environment variables:
-   - `MONGODB_URL`: Your MongoDB connection string
-   - `JWT_SECRET`: Your secret key
-   - `NODE_ENV`: production
-6. Deploy
-
-### Deploy Frontend to Vercel
-
-1. Push code to GitHub
-2. Go to https://vercel.com
-3. Import project
-4. Set environment variable:
-   - `VITE_API_URL`: Your backend Render URL
-5. Deploy
-
----
-
-## ✨ Features Implemented
-
-✅ User registration and login with JWT auth
-✅ Three user roles: Customer, Admin, Agent
-✅ Order creation with automatic rate calculation
-✅ Zone-based pricing (intra-zone vs inter-zone)
-✅ Volumetric weight calculation
-✅ COD surcharge handling
-✅ Order status tracking with immutable history
-✅ Admin dashboard for managing zones and rates
-✅ Agent dashboard for order updates
-✅ Customer dashboard for tracking orders
-✅ Rate card management (B2B and B2C)
-✅ Order filtering and search
-✅ Responsive UI
-
----
-
-## 🔮 Future Enhancements
-
-- Email and SMS notifications
-- Real-time auto-assignment of nearest agent
-- Live location tracking for agents
-- Failed delivery rescheduling
-- Payment gateway integration
-- PDF invoice generation
-- Analytics and reporting
-- Mobile app
-
----
-
-## 🛠️ Tech Stack
-
-**Backend:**
-- Node.js
-- Express.js
-- MongoDB
-- JWT for authentication
-- bcryptjs for password hashing
-
-**Frontend:**
-- React
-- Vite
-- Axios for HTTP requests
-- CSS for styling
-
----
-
-## 📝 Notes
-
-- All passwords are hashed using bcryptjs
-- JWT tokens expire in 7 days
-- Rate calculation is configurable and has no hardcoded values
-- All status changes are logged with timestamp and actor information
-- The system supports both B2B and B2C order types
-- MongoDB Atlas free tier includes 512MB storage (sufficient for MVP)
-
----
-
-## 🤝 Support
-
-For issues or questions, check the API responses which include detailed error messages.
-
----
-
-**Status:** ✅ Ready for Production  
-**Last Updated:** 2026-07-02  
-**Version:** 1.0.0
+Priya Singh
