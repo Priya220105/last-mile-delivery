@@ -1,9 +1,19 @@
 # 📦 Last-Mile Delivery Tracker
 
+![React](https://img.shields.io/badge/React-19-blue)
+![Node](https://img.shields.io/badge/Node.js-Express-green)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-success)
+![JWT](https://img.shields.io/badge/Auth-JWT-orange)
+![License](https://img.shields.io/badge/License-MIT-blue)
+
 A full-stack delivery management platform where customers and admins create
 orders with auto-calculated shipping charges, delivery agents are assigned
 to fulfil them, and customers get real-time status tracking with email
 notifications at every step.
+
+The goal of this project is to simulate a production-ready last-mile
+delivery management system featuring configurable pricing, zone-based
+logistics, intelligent agent assignment, and real-time delivery tracking.
 
 Built as part of the Unthinkable Solutions (Daffodil Software) assignment —
 2027 batch.
@@ -17,14 +27,53 @@ Built as part of the Unthinkable Solutions (Daffodil Software) assignment —
 | **Frontend** | [last-mile-delivery-delta.vercel.app](https://last-mile-delivery-delta.vercel.app) |
 | **Backend API** | [last-mile-delivery-api.onrender.com](https://last-mile-delivery-api.onrender.com) |
 
-> **Note:** The backend runs on Render's free tier, which spins down after
-> inactivity. The **first request may take 30–60 seconds** to respond while
-> the server wakes up — please allow it to load fully before assuming an
-> error. Screenshots below cover the core flows in case of a slow cold start
+> ⚠ **Backend is hosted on Render's free tier.**
+> If the application appears to load slowly, please wait approximately
+> 30–60 seconds for the backend service to wake up before retrying.
+> Screenshots below cover the core flows in case of a slow cold start
 > during review.
 
-### Screenshots
-`<insert 2–3 screenshots: order placement + charge breakdown, admin dashboard, zones management>`
+### 🔑 Demo Login
+
+| Role     | Email                 | Password    |
+|----------|------------------------|-------------|
+| Admin    | admin@example.com      | password123 |
+| Customer | customer@example.com   | password123 |
+| Agent    | agent@example.com      | password123 |
+
+*(Full table repeated further down for convenience.)*
+
+---
+
+## 📸 Screenshots
+
+### Login
+![Login](./screenshots/login.png)
+Secure role-based authentication with demo credentials for Customer, Admin, and Delivery Agent.
+
+---
+
+### Customer Dashboard
+![Customer Dashboard](./screenshots/customer-dashboard.png)
+Customers can place new orders, track deliveries, and view their order history.
+
+---
+
+### Charge Calculation
+![Rate Calculation](./screenshots/rate-calculation.png)
+Shipping charges are calculated automatically based on zones, volumetric weight, weight slab, order type, and payment method before confirming the order.
+
+---
+
+### Admin Dashboard
+![Admin Dashboard](./screenshots/admin-dashboard.png)
+Admins can monitor platform statistics, manage orders, delivery agents, rate cards, and delivery zones.
+
+---
+
+### Rate Card Management
+![Rate Cards](./screenshots/admin-rate-cards.png)
+Admins can create and update B2B/B2C pricing and COD surcharge percentages without modifying application code.
 
 ---
 
@@ -54,6 +103,44 @@ Built as part of the Unthinkable Solutions (Daffodil Software) assignment —
 - **Auth:** Role-based authentication (JWT)
 - **Notifications:** Email on order status change
 - **Deployment:** Vercel (frontend) · Render (backend)
+
+### Deployment Architecture
+
+```text
+React (Vercel)
+        │
+        ▼
+Express API (Render)
+        │
+        ▼
+MongoDB Atlas
+```
+
+---
+
+## 📂 Project Structure
+
+```text
+last-mile-delivery/
+│
+├── frontend/
+│   ├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+│
+├── backend/
+│   ├── routes/
+│   ├── middleware/
+│   ├── utils/
+│   ├── models/
+│   ├── db.js
+│   └── server.js
+│
+├── screenshots/
+├── README.md
+└── SYSTEM_DESIGN.md
+```
 
 ---
 
@@ -92,15 +179,36 @@ npm run dev              # starts the app on http://localhost:3000
 | Admin    | admin@example.com      | password123 |
 | Agent    | agent@example.com      | password123 |
 
+### Seeded Data
+
+The database is pre-seeded with:
+
+- 3 demo users
+- 6 delivery zones
+- Default rate cards
+- Sample delivery agent
+- Sample order
+
+This allows the application to be tested immediately after deployment.
+
 ---
 
 ## 🌍 Environment Variables
 
-See `.env.example` for the full list. At minimum:
+Copy `.env.example` to `.env` and fill in the values. At minimum:
 
-```
-MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/lastmile_delivery?retryWrites=true&w=majority
+```env
 PORT=5000
+
+MONGODB_URI=
+
+JWT_SECRET=
+
+EMAIL_USER=
+
+EMAIL_PASS=
+
+CLIENT_URL=http://localhost:3000
 ```
 
 ---
@@ -262,6 +370,28 @@ Actual Weight `2kg` → resolves to weight slab `1-2kg`.
   than real road-network routing
 - Notifications are email-only; SMS integration is a natural next step
 - Free-tier hosting (Render) has a cold-start delay after inactivity
+
+---
+
+## 📝 Assignment Submission
+
+This project was developed for the Unthinkable Solutions (Daffodil Software)
+Software Engineering Assignment (2027 Batch).
+
+Submission includes:
+- ✅ Public GitHub repository
+- ✅ Hosted frontend (Vercel)
+- ✅ Hosted backend (Render)
+- ✅ README with setup guide
+- ✅ System design document
+- ✅ Demo credentials
+
+---
+
+## License
+
+MIT — developed as part of the Unthinkable Solutions (Daffodil Software)
+Software Engineering Assignment (2027 Batch).
 
 ---
 
