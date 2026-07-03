@@ -65,11 +65,11 @@ function Login({ onLogin, onSwitchPage }) {
         </p>
 
         <div className="demo-credentials">
-          <p><strong>Demo Credentials:</strong></p>
-          <p>Customer: customer@test.com / pass123</p>
-          <p>Admin: admin@test.com / pass123</p>
-          <p>Agent: agent@test.com / pass123</p>
-        </div>
+  <strong>Demo Credentials:</strong><br />
+  Customer: customer@example.com / password123<br />
+  Admin: admin@example.com / password123<br />
+  Agent: agent@example.com / password123
+</div>
       </div>
     </div>
   );
